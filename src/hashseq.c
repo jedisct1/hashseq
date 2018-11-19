@@ -32,12 +32,13 @@ permute(uint32_t state[16])
 }
 
 static inline void
-hash_init(uint32_t istate[16], const uint32_t suffix[8], uint32_t level)
+hash_init(uint32_t istate[16], const uint32_t suffix[8], uint32_t level,
+          uint32_t iteration)
 {
     int i;
 
     memcpy(&istate[0], IV, 8 * sizeof istate[0]);
-    istate[7] ^= level;
+    istate[7] ^= (level << 16) | iteration;
     for (i = 0; i < 8; i++) {
         istate[8 + i] = IV[i] ^ suffix[i];
     }
@@ -48,7 +49,7 @@ hash_try(uint32_t ostate[16], uint32_t istate[16],
          const HashSeqSolution *proposal, const Mask *mask)
 {
     uint32_t f0, f1;
-    int      i;
+    int i;
 
     istate[0] = IV[0] ^ proposal->s0;
     istate[1] = IV[1] ^ proposal->s1;
@@ -78,13 +79,14 @@ mask_from_level(Mask *mask, uint32_t level)
 }
 
 static int
-solve1(HashSeqSolution *solution, uint32_t suffix[8], uint32_t level)
+solve1(HashSeqSolution *solution, uint32_t suffix[8], uint32_t level,
+       uint32_t iteration)
 {
-    uint32_t        istate[16], ostate[16];
-    Mask            mask;
+    uint32_t istate[16], ostate[16];
+    Mask mask;
     HashSeqSolution proposal;
 
-    hash_init(istate, suffix, level);
+    hash_init(istate, suffix, level, iteration);
     mask_from_level(&mask, level);
     proposal.s0 = proposal.s1 = 0U;
     while (hash_try(ostate, istate, &proposal, &mask) == 0) {
@@ -99,12 +101,13 @@ solve1(HashSeqSolution *solution, uint32_t suffix[8], uint32_t level)
 }
 
 static int
-verify1(const HashSeqSolution *proposal, uint32_t suffix[8], uint32_t level)
+verify1(const HashSeqSolution *proposal, uint32_t suffix[8], uint32_t level,
+        uint32_t iteration)
 {
     uint32_t state[16];
-    Mask     mask;
+    Mask mask;
 
-    hash_init(state, suffix, level);
+    hash_init(state, suffix, level, iteration);
     mask_from_level(&mask, level);
     if (hash_try(state, state, proposal, &mask)) {
         memcpy(suffix, &state[8], 8 * sizeof state[0]);
@@ -115,15 +118,18 @@ verify1(const HashSeqSolution *proposal, uint32_t suffix[8], uint32_t level)
 
 int
 hashseq_solve(HashSeqSolution *solutions, const uint32_t suffix[8],
-              uint32_t level_first, uint32_t level_last)
+              uint32_t level_first, uint32_t level_last, uint32_t iterations)
 {
     uint32_t suffix_[8];
-    uint32_t level;
+    uint32_t level, iteration;
+    int i = 0;
 
     memcpy(suffix_, suffix, sizeof suffix_);
     for (level = level_first; level <= level_last; level++) {
-        if (solve1(&solutions[level - level_first], suffix_, level) != 0) {
-            return -1;
+        for (iteration = 0; iteration < iterations; iteration++) {
+            if (solve1(&solutions[i++], suffix_, level, iteration) != 0) {
+                return -1;
+            }
         }
     }
     return 0;
@@ -131,15 +137,18 @@ hashseq_solve(HashSeqSolution *solutions, const uint32_t suffix[8],
 
 int
 hashseq_verify(const HashSeqSolution *solutions, const uint32_t suffix[8],
-               uint32_t level_first, uint32_t level_last)
+               uint32_t level_first, uint32_t level_last, uint32_t iterations)
 {
     uint32_t suffix_[8];
-    uint32_t level;
+    uint32_t level, iteration;
+    int i = 0;
 
     memcpy(suffix_, suffix, sizeof suffix_);
     for (level = level_first; level <= level_last; level++) {
-        if (verify1(&solutions[level - level_first], suffix_, level) == 0) {
-            return 0;
+        for (iteration = 0; iteration < iterations; iteration++) {
+            if (verify1(&solutions[i++], suffix_, level, iteration) == 0) {
+                return 0;
+            }
         }
     }
     return 1;
