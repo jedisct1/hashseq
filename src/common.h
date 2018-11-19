@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifndef NATIVE_BIG_ENDIAN
+# ifndef NATIVE_LITTLE_ENDIAN
+#  define NATIVE_LITTLE_ENDIAN
+# endif
+#endif
+
 #define ROTR32(X, B) (uint32_t)(((X) >> (B)) | ((X) << (32 - (B))))
 
 #define LOAD32_LE(SRC) load32_le(SRC)
