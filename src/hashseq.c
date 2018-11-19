@@ -32,15 +32,15 @@ permute(uint32_t state[16])
 }
 
 static inline void
-hash_init(uint32_t istate[16], const uint32_t suffix[8], uint32_t level,
+hash_init(uint32_t state[16], const uint32_t suffix[8], uint32_t level,
           uint32_t iteration)
 {
     int i;
 
-    memcpy(&istate[0], IV, 8 * sizeof istate[0]);
-    istate[7] ^= (level << 16) | iteration;
+    memcpy(&state[0], IV, 8 * sizeof state[0]);
+    state[7] ^= (level << 16) | iteration;
     for (i = 0; i < 8; i++) {
-        istate[8 + i] = IV[i] ^ suffix[i];
+        state[8 + i] = IV[i] ^ suffix[i];
     }
 }
 
