@@ -53,15 +53,6 @@ blake2s_round(uint32_t state[16], const uint32_t mb32[16], int round)
     BLAKE2S_G(mb32, round, 7, state[3], state[4], state[9], state[14]);
 }
 
-static inline void
-blake2s_increment_counter(uint32_t t[2], uint32_t inc)
-{
-    t[0] += inc;
-    if (t[0] < inc) {
-        t[1]++;
-    }
-}
-
 static void
 blake2s_hashblock(uint32_t state[16], uint32_t h[8], uint32_t t[2],
                   const uint8_t message_block[64], uint32_t inc, int is_last)
@@ -73,9 +64,12 @@ blake2s_hashblock(uint32_t state[16], uint32_t h[8], uint32_t t[2],
     for (i = 0; i < 16; i++) {
         mb32[i] = LOAD32_LE(&message_block[(size_t) i * sizeof mb32[0]]);
     }
-    blake2s_increment_counter(t, inc);
     memcpy(&state[0], h, 8 * sizeof state[0]);
     memcpy(&state[8], IV, 8 * sizeof state[0]);
+    t[0] += inc;
+    if (t[0] < inc) {
+        t[1]++;
+    }
     state[12] ^= t[0];
     state[13] ^= t[1];
     if (is_last) {
@@ -97,13 +91,12 @@ blake2s(uint8_t *out, size_t out_len, const uint8_t *in, size_t in_len,
     uint32_t state[16];
     uint8_t  block[64];
     uint32_t h[8];
-    uint32_t t[2];
+    uint32_t t[2] = { 0 };
     size_t   off;
     int      i;
 
     memcpy(h, IV, sizeof h);
     h[0] ^= (out_len | (key_len << 8) | (1 << 16) | (1 << 24));
-    t[0] = t[1] = 0U;
     if (key_len > 0) {
         memset(block, 0, sizeof block);
         memcpy(block, key, key_len);
