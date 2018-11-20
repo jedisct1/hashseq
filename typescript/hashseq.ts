@@ -68,7 +68,7 @@ function solve1(suffix: Uint32Array, level: number, iteration: number): ISolutio
     const mask = { m0: 0 | 0, m1: 0 | 0 };
     hash_init(istate, suffix, level, iteration);
     mask_from_level(mask, level);
-    const proposal = { s0: 0 | 0, s1: 0 | 0 };
+    const proposal = { s0: 0, s1: 0 };
     while (!hash_try(ostate, istate, proposal, mask)) {
         proposal.s0 = (proposal.s0 + 1) | 0;
         if (proposal.s0 === 0) {
@@ -81,7 +81,7 @@ function solve1(suffix: Uint32Array, level: number, iteration: number): ISolutio
 
 function verify1(proposal: ISolution, suffix: Uint32Array, level: number, iteration: number): boolean {
     const state = new Uint32Array(16);
-    const mask = { m0: 0 | 0, m1: 0 | 0 };
+    const mask = { m0: 0, m1: 0 };
     hash_init(state, suffix, level, iteration);
     mask_from_level(mask, level);
     if (hash_try(state, state, proposal, mask)) {
