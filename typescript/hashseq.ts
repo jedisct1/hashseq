@@ -55,7 +55,7 @@ namespace HashSeq {
 
     function mask_from_level(mask: IMask, level: number): void {
         if (level > 32) {
-            mask.m0 = ~(0 | 0);
+            mask.m0 = ~0;
             mask.m1 = (1 << (level - 32)) - 1 | 0;
         } else {
             mask.m1 = 0;
@@ -66,7 +66,7 @@ namespace HashSeq {
     function solve1(suffix: Uint32Array, level: number, iteration: number): ISolution {
         const istate = new Uint32Array(16);
         const ostate = new Uint32Array(16);
-        const mask = { m0: 0 | 0, m1: 0 | 0 };
+        const mask = { m0: 0, m1: 0 };
         hash_init(istate, suffix, level, iteration);
         mask_from_level(mask, level);
         const proposal = { s0: 0, s1: 0 };
