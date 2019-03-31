@@ -151,7 +151,7 @@ hashseq_arena_init(HashSeqArena *arena, uint32_t *base, size_t size)
 
     memset(base, 0, size);
     size /= sizeof base[0];
-    if (size < 8 || size > (size_t)(uint32_t) -1) {
+    if (size < 32 || size > (size_t)(uint32_t) -1) {
         return -1;
     }
     arena->base = base;
