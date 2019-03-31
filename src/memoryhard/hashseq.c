@@ -78,7 +78,8 @@ hash_try(HashSeqArena *arena, uint32_t ostate[16], uint32_t istate[16],
             }
         }
     }
-    for (off = 0; off < arena->size; off += 8 * sizeof ostate[0]) {
+    for (off = 0; off <= arena->size -  8 * sizeof ostate[0];
+         off += 8 * sizeof ostate[0]) {
         for (i = 0; i < 8; i++) {
             ostate[i] ^= arena->base[off + i];
         }
@@ -148,10 +149,11 @@ hashseq_arena_init(HashSeqArena *arena, uint32_t *base, size_t size)
 {
     uint32_t mask;
 
-    if (size > (size_t)(uint32_t) -1) {
+    memset(base, 0, size);
+    size /= sizeof base[0];
+    if (size < 8 || size > (size_t)(uint32_t) -1) {
         return -1;
     }
-    memset(base, 0, size);
     arena->base = base;
     arena->size = (uint32_t) size;
     mask        = 0U;
